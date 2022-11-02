@@ -18,6 +18,8 @@
 .define CURRENT_Y_SPRITE $07
 .define CURRENT_SPRITE $08
 
+.define DEBUG $09
+
 ; 3th number => MIRROR 
 .DB "NES", $1A, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -67,10 +69,9 @@ start:
     LDA #$18
     STA PPUDATA
     
-    JSR drawlogo
-    
-loop:
+    JSR drawlogo 
     JSR drawsprite
+loop:
     JMP loop
   
 drawlogo:
@@ -209,7 +210,12 @@ nmi:
     LDA SCROLL_X
     STA PPUSCROLL
     ; scroll sprite
+    LDA SPRITE_X_OFFSET
+    ADC #$01
+    CMP #$EF
+    BPL notscrollspriteleft
     INC SPRITE_X_OFFSET
+    JSR drawsprite
     notscrollspriteleft:
     JMP endscroll
     scrollright:
@@ -220,18 +226,37 @@ nmi:
     LDA SCROLL_X
     STA PPUSCROLL
     ; scroll sprite
+    LDA SPRITE_X_OFFSET
+    CLC
+    SBC #$01
+    BEQ notscrollspriteright
     DEC SPRITE_X_OFFSET
+    JSR drawsprite
+    notscrollspriteright:
     endscroll:
     LDA #0
     STA PPUSCROLL
     PLA ; globbering
     RTI
     scrollspritedown:
+    LDA SPRITE_Y_OFFSET
+    ADC #$01
+    CMP #$C7
+    BEQ notscrollspritedown
     INC SPRITE_Y_OFFSET
+    JSR drawsprite
+    notscrollspritedown:
     PLA ; globbering
     RTI
     scrollspritetop:
+    LDA SPRITE_Y_OFFSET
+    CLC
+    SBC #$01
+    CMP #$08
+    BEQ notscrollspritetop
     DEC SPRITE_Y_OFFSET
+    JSR drawsprite
+    notscrollspritetop:
     PLA ; globbering
     RTI
 
